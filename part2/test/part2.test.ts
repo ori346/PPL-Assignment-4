@@ -16,6 +16,12 @@ describe('2.1 (PromisedStore)', () => {
         expect(a).to.equal(42)
     })
 
+    it('delete', async () => {
+        const store = makePromisedStore()
+        await store.set('a', 42)
+        const a = await store.delete('a')
+        await expect(store.get('a')).to.be.rejectedWith(MISSING_KEY)
+    })
     it('throws on missing key', async () => {
         const store = makePromisedStore()
         await expect(store.get('a')).to.be.rejectedWith(MISSING_KEY)
@@ -38,7 +44,7 @@ describe('2.2 (asycMemo)', () => {
         expect(await memo('a')).to.equal('cached')
         ret = 'new'
         expect(await memo('a')).to.equal('cached')
-    })
+     })
 })
 
 describe('2.3 (lazy generators)', () => {
@@ -50,13 +56,11 @@ describe('2.3 (lazy generators)', () => {
 
     it('filters', async () => {
         const gen = lazyFilter(countTo4, (v) => v % 2 == 0)()
-
         expect([...gen]).to.deep.equal([2, 4])
     })
-
+    
     it('maps', async () => {
         const gen = lazyMap(countTo4, (v) => v ** 2)()
-
         expect([...gen]).to.deep.equal([1, 4, 9, 16])
     })
 })

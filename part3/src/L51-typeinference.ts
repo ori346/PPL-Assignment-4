@@ -240,6 +240,7 @@ export const typeofLetrec = (exp: A.LetrecExp, tenv: E.TEnv): Result<T.TExp> => 
 //   (define (var : texp) val)
 // TODO - write the typing rule for define-exp
 export const typeofDefine = (exp: A.DefineExp, tenv: E.TEnv): Result<T.VoidTExp> => {
+    E.makeExtendTEnv([exp.var.var] , typeofExp(exp.val) ,tenv)
     return makeFailure('TODO typeofDefine');
 };
 
