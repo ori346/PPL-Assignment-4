@@ -1,5 +1,7 @@
 /* 2.1 */
 
+import { reject } from "ramda"
+
 
 
 export const MISSING_KEY = '___MISSING___'
@@ -23,8 +25,7 @@ export function makePromisedStore<K, V>(): PromisedStore<K, V> {
         },
         set(key: K, value: V) {
             return new Promise<void>((resolved, reject) => {
-                if (!map.has(key))
-                    map.set(key, new Promise<V>((sec, reject) => sec(value)))
+                map.set(key, new Promise<V>((resolved, reject) => resolved(value)))
                 resolved()
             })
         },
@@ -51,13 +52,22 @@ export function getAll<K, V>(store: PromisedStore<K, V>, keys: K[]): Promise<V[]
 // ??? (you may want to add helper functions here)
 //
 
+async function containElement<T,R> ( element:T ,store:PromisedStore<T,R>):Promise<boolean> {
+    //console.log(store.get(element))
+    const x = await store.get(element)
+    return await store.get(element) !== undefined
+} 
 
 export function asycMemo<T, R>(f: (param: T) => R): (param: T) => Promise<R> {
-    const store: PromisedStore<number, R> = makePromisedStore()
-    return ((param: T): Promise<R> => {
-        store.set(0, f(param))
-        return store.get(0)
-    })
+    const store: PromisedStore<T, R> = makePromisedStore()
+    const map:Map<T , Boolean> = new Map()
+    return async (param: T): Promise<R> => {
+        if(!map.get(param)){
+            store.set(param, f(param))
+            map.set(param ,true)
+        }
+        return store.get(param)
+    }
 }
 
 
