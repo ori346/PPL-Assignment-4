@@ -4,7 +4,7 @@ import { equals, map, zipWith } from 'ramda';
 import { isAppExp, isBoolExp, isDefineExp, isIfExp, isLetrecExp, isLetExp, isNumExp,
          isPrimOp, isProcExp, isProgram, isStrExp, isVarRef, parseL5Exp, unparse,
          AppExp, BoolExp, DefineExp, Exp, IfExp, LetrecExp, LetExp, NumExp,
-         Parsed, PrimOp, ProcExp, Program, StrExp } from "./L51-ast";
+         Parsed, PrimOp, ProcExp, Program, StrExp, SetExp, isSetExp } from "./L51-ast";
 import { applyTEnv, makeEmptyTEnv, makeExtendTEnv, TEnv } from "../imp/TEnv";
 import { isProcTExp, makeBoolTExp, makeNumTExp, makeProcTExp, makeStrTExp, makeVoidTExp,
          parseTE, unparseTExp,
@@ -48,6 +48,7 @@ export const typeofExp = (exp: Parsed, tenv: TEnv): Result<TExp> =>
     isLetrecExp(exp) ? typeofLetrec(exp, tenv) :
     isDefineExp(exp) ? typeofDefine(exp, tenv) :
     isProgram(exp) ? typeofProgram(exp, tenv) :
+    isSetExp(exp) ? typeofSet(exp,tenv):
     // Not implemented: isSetExp(exp) isLitExp(exp)
     makeFailure("Unknown type");
 
@@ -95,9 +96,6 @@ export const typeofPrim = (p: PrimOp): Result<TExp> =>
     (p.op === 'string=?') ? parseTE('(T1 * T2 -> boolean)') :
     (p.op === 'display') ? parseTE('(T -> void)') :
     (p.op === 'newline') ? parseTE('(Empty -> void)') :
-    (p.op === 'cdr') ? parseTE('(T1 * T2) -> T2'):
-    (p.op === 'car') ? parseTE('(T1 * T2) -> T1'):
-    (p.op === 'cons') ? parseTE('(T1 * T2) -> (Pair T1 T2)'):
     makeFailure(`Primitive not yet implemented: ${p.op}`);
 
 // Purpose: compute the type of an if-exp
@@ -202,11 +200,47 @@ export const typeofLetrec = (exp: LetrecExp, tenv: TEnv): Result<TExp> => {
 //   (define (var : texp) val)
 // Not implemented
 export const typeofDefine = (exp: DefineExp, tenv: TEnv): Result<VoidTExp> => {
+    const val_type = typeofExp(exp.val,tenv);
+    const constraint1 = bind(val_type, val_type => checkEqualType(val_type, exp.var.texp, exp));
+    //const extTEnv = makeExtendTEnv([exp.var.var], [exp.var.texp], tenv);
+
     return makeOk(makeVoidTExp());
 };
 
 // Purpose: compute the type of a program
 // Typing rule:
 // Not implemented: Thread the TEnv (as in L1)
-export const typeofProgram = (exp: Program, tenv: TEnv): Result<TExp> =>
-    makeFailure("Not implemented");
+export const typeofProgram = (exp: Program, tenv: TEnv): Result<TExp> =>{
+        return typeofProgramExp(exp.exps,tenv);
+}
+
+
+const typeofProgramExp = (exps: Exp[], tenv: TEnv): Result<TExp> =>{
+    if (isEmpty(rest(exps))){
+        const x =  first(exps);
+        if (isDefineExp(x)){
+            return typeofDefine(x,tenv);
+        }
+        else{
+            return typeofExp(x, tenv)
+        }
+    }
+    else { 
+        const x =  first(exps);
+        if (isDefineExp(x)){
+            typeofDefine(x,tenv);
+            const extTEnv = makeExtendTEnv([x.var.var], [x.var.texp], tenv);
+            return typeofProgramExp(rest(exps),extTEnv);
+        }
+        else{
+            return bind(typeofExp(first(exps), tenv), _ => typeofExps(rest(exps), tenv));
+        }
+    }
+}
+
+const typeofSet = (exp:SetExp,tenv:TEnv):Result<VoidTExp> =>{
+    const val_type = typeofExp(exp.val,tenv);
+    const env_val_type =  applyTEnv(tenv,exp.var.var);
+    const constraint2 = safe2((valType: TExp, envVarType: TExp) => checkEqualType(valType, envVarType, exp))(val_type, env_val_type);
+    return bind(constraint2,_ => makeOk(makeVoidTExp()));
+}
