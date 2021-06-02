@@ -8,7 +8,7 @@ import { isAppExp, isBoolExp, isDefineExp, isIfExp, isLetrecExp, isLetExp, isNum
 import { applyTEnv, makeEmptyTEnv, makeExtendTEnv, TEnv } from "../imp/TEnv";
 import { isProcTExp, makeBoolTExp, makeNumTExp, makeProcTExp, makeStrTExp, makeVoidTExp,
          parseTE, unparseTExp,
-         BoolTExp, NumTExp, StrTExp, TExp, VoidTExp } from "./TExp51";
+         BoolTExp, NumTExp, StrTExp, TExp, VoidTExp, isPairTExp } from "./TExp51";
 import { isEmpty, allT, first, rest } from '../shared/list';
 import { Result, makeFailure, bind, makeOk, safe3, safe2, zipWithResult } from '../shared/result';
 import { parse as p } from "../shared/parser";
@@ -49,6 +49,7 @@ export const typeofExp = (exp: Parsed, tenv: TEnv): Result<TExp> =>
     isDefineExp(exp) ? typeofDefine(exp, tenv) :
     isProgram(exp) ? typeofProgram(exp, tenv) :
     isSetExp(exp) ? typeofSet(exp,tenv):
+    isPairTExp(exp) ? 
     // Not implemented: isSetExp(exp) isLitExp(exp)
     makeFailure("Unknown type");
 
@@ -96,6 +97,9 @@ export const typeofPrim = (p: PrimOp): Result<TExp> =>
     (p.op === 'string=?') ? parseTE('(T1 * T2 -> boolean)') :
     (p.op === 'display') ? parseTE('(T -> void)') :
     (p.op === 'newline') ? parseTE('(Empty -> void)') :
+    (p.op === 'cdr') ? parseTE('(T1 * T2) -> T2'):
+    (p.op === 'car') ? parseTE('(T1 * T2) -> T1'):
+    (p.op === 'cons') ? parseTE('(T1 * T2) -> (Pair T1 T2)'):
     makeFailure(`Primitive not yet implemented: ${p.op}`);
 
 // Purpose: compute the type of an if-exp
@@ -244,3 +248,4 @@ const typeofSet = (exp:SetExp,tenv:TEnv):Result<VoidTExp> =>{
     const constraint2 = safe2((valType: TExp, envVarType: TExp) => checkEqualType(valType, envVarType, exp))(val_type, env_val_type);
     return bind(constraint2,_ => makeOk(makeVoidTExp()));
 }
+

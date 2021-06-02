@@ -263,8 +263,9 @@ export const typeofProgram = (exp: A.Program, tenv: E.TEnv): Result<T.TExp> =>{
 }
 
 const typeofProgramExps = (exp: A.Exp, exps: A.Exp[], tenv: E.TEnv): Result<T.TExp> => 
-    {    if (isEmpty(exps)){
+    {    if (isEmpty(exps)){ // in case exp is the only expretion left 
         if (A.isDefineExp(exp)){
+            //if its define we dont bother making extended env becose its the last exp 
             return typeofDefine(exp,tenv);
         }
         else{
@@ -272,7 +273,7 @@ const typeofProgramExps = (exp: A.Exp, exps: A.Exp[], tenv: E.TEnv): Result<T.TE
         }
     }
     else { 
-        if (A.isDefineExp(exp)){
+        if (A.isDefineExp(exp)){//we make extended env and sent it to typeofProgramExps recusivly
             typeofDefine(exp,tenv);
             const extTEnv = E.makeExtendTEnv([exp.var.var], [exp.var.texp], tenv);
             return typeofProgramExps(first(exps),rest(exps),extTEnv);
@@ -292,8 +293,9 @@ const typeofProgramExps = (exp: A.Exp, exps: A.Exp[], tenv: E.TEnv): Result<T.TE
 export const typeofLit = (exp: A.LitExp): Result<T.TExp> =>{
     if(V.isSymbolSExp(exp.val))
         return makeOk(T.makeSymbolTExp(exp.val));
-    else
+    else{
         return makeFailure(`lit exp must be symbol`);
+    }
 }
 
 // Purpose: compute the type of a set! expression
