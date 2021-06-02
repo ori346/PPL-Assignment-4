@@ -106,6 +106,7 @@ describe('L5 Parser', () => {
     });
 
     it('parses "set!" expressions', () => {
+        const temp = p("(set! x 1)");
         expect(p("(set! x 1)")).to.satisfy(isOkT(isSetExp));
     });
 
