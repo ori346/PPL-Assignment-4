@@ -5,13 +5,14 @@ import { isAppExp, isBoolExp, isDefineExp, isIfExp, isLetrecExp, isLetExp, isNum
          isPrimOp, isProcExp, isProgram, isStrExp, isVarRef, parseL5Exp, unparse,
          AppExp, BoolExp, DefineExp, Exp, IfExp, LetrecExp, LetExp, NumExp,
          Parsed, PrimOp, ProcExp, Program, StrExp, SetExp, isSetExp } from "./L51-ast";
-import { applyTEnv, makeEmptyTEnv, makeExtendTEnv, TEnv } from "../imp/TEnv";
+import { applyTEnv, isEmptyTEnv, isExtendTEnv, makeEmptyTEnv, makeExtendTEnv, TEnv } from "../imp/TEnv";
 import { isProcTExp, makeBoolTExp, makeNumTExp, makeProcTExp, makeStrTExp, makeVoidTExp,
          parseTE, unparseTExp,
-         BoolTExp, NumTExp, StrTExp, TExp, VoidTExp } from "./TExp51";
+         BoolTExp, NumTExp, StrTExp, TExp, VoidTExp, isPairTExp, makePairTExp } from "./TExp51";
 import { isEmpty, allT, first, rest } from '../shared/list';
 import { Result, makeFailure, bind, makeOk, safe3, safe2, zipWithResult } from '../shared/result';
 import { parse as p } from "../shared/parser";
+import { globalEnvAddBinding, isGlobalEnv, theGlobalEnv } from '../imp/L5-env';
 
 // Purpose: Check that type expressions are equivalent
 // as part of a fully-annotated type check process of exp.
@@ -49,6 +50,7 @@ export const typeofExp = (exp: Parsed, tenv: TEnv): Result<TExp> =>
     isDefineExp(exp) ? typeofDefine(exp, tenv) :
     isProgram(exp) ? typeofProgram(exp, tenv) :
     isSetExp(exp) ? typeofSet(exp,tenv):
+    //isPairTExp(exp) ?  :
     // Not implemented: isSetExp(exp) isLitExp(exp)
     makeFailure("Unknown type");
 
@@ -96,6 +98,9 @@ export const typeofPrim = (p: PrimOp): Result<TExp> =>
     (p.op === 'string=?') ? parseTE('(T1 * T2 -> boolean)') :
     (p.op === 'display') ? parseTE('(T -> void)') :
     (p.op === 'newline') ? parseTE('(Empty -> void)') :
+    (p.op === 'cdr') ?  parseTE('(cons -> T)')://parseTE('(T1 * T2) -> T2'):
+    (p.op === 'car') ?  parseTE('(cons -> T)')://parseTE('(T1 * T2) -> T1'):
+    (p.op === 'cons') ? parseTE( '(T1 * T2 -> cons)')://parseTE('(T1 * T2) -> (Pair T1 T2)'):
     makeFailure(`Primitive not yet implemented: ${p.op}`);
 
 // Purpose: compute the type of an if-exp
@@ -200,11 +205,21 @@ export const typeofLetrec = (exp: LetrecExp, tenv: TEnv): Result<TExp> => {
 //   (define (var : texp) val)
 // Not implemented
 export const typeofDefine = (exp: DefineExp, tenv: TEnv): Result<VoidTExp> => {
-    const val_type = typeofExp(exp.val,tenv);
-    const constraint1 = bind(val_type, val_type => checkEqualType(val_type, exp.var.texp, exp));
-    //const extTEnv = makeExtendTEnv([exp.var.var], [exp.var.texp], tenv);
-
-    return makeOk(makeVoidTExp());
+    //const y = applyTEnv(tenv , exp.var.var)
+    const vard = exp.var.var 
+    const type = exp.var.texp
+    const val = exp.val
+    const val_type:Result<TExp> = typeofExp(exp.val,tenv);
+    //console.log("!!!!!" + val_type + "!!!!!")
+    const constraint1:Result<boolean> = bind(val_type, val_type => checkEqualType(val_type, exp.var.texp, exp));
+    //bind(typeofExp(exp.val,tenv) , x => makeOk(makeExtendTEnv([exp.var.var] , [x] , tenv)) )
+    // if(isEmptyTEnv(tenv)) 
+    //     bind( val_type , t => makeOk(tenv = makeExtendTEnv([exp.var.var], [t] ,tenv)))
+    // else if(isExtendTEnv(tenv))
+    //     bind(val_type , t => makeOk(tenv = makeExtendTEnv(tenv)))
+    return bind(constraint1,_ =>{ 
+        console.log("define!!!")
+        return makeOk(makeVoidTExp())});
 };
 
 // Purpose: compute the type of a program

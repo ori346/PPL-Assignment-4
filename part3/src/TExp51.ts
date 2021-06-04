@@ -189,8 +189,9 @@ export const parseTE = (t: string): Result<TExp> =>
 ;; parseTExp('cons') => 'pair-te'
 ;; parseTExp('symbol-a-b') => '(symbol-te a-b)'
 */
-export const parseTExp = (texp: Sexp): Result<TExp> => 
-    (texp === "number") ? makeOk(makeNumTExp()) :
+export const parseTExp = (texp: Sexp): Result<TExp> => {
+    //console.log(texp)
+    return (texp === "number") ? makeOk(makeNumTExp()) :
     (texp === "boolean") ? makeOk(makeBoolTExp()) :
     (texp === "void") ? makeOk(makeVoidTExp()) :
     (texp === "string") ? makeOk(makeStrTExp()) :
@@ -201,7 +202,7 @@ export const parseTExp = (texp: Sexp): Result<TExp> =>
     isString(texp) ? makeOk(makeTVar(texp)) : 
     isArray(texp) ? parseCompoundTExp(texp) :
     makeFailure(`Unexpected TExp - ${texp}`);
-
+}
 /*
 ;; expected structure: (<params> -> <returnte>) or [class [method : texp],...] or proc (t1 -> t2)
 ;; expected exactly one -> in the list

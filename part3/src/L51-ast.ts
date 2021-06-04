@@ -5,14 +5,14 @@
 // L51 extends L5 with:
 // typed class construct
 
-import { concat, chain, join, map, zipWith } from "ramda";
+import { concat, chain, join, map, zipWith, reduce } from "ramda";
 import { Sexp, Token } from 's-expression';
 import { isCompoundSExp, isEmptySExp, isSymbolSExp, makeCompoundSExp, makeEmptySExp, makeSymbolSExp, SExpValue, valueToString } from '../imp/L5-value';
 import { allT, first, rest, second, isEmpty } from '../shared/list';
 import { parse as p, isToken, isSexpString } from "../shared/parser";
 import { Result, bind, makeFailure, mapResult, makeOk, safe2, safe3 } from "../shared/result";
 import { isArray, isString, isNumericString, isIdentifier } from "../shared/type-predicates";
-import { isTVar, makeFreshTVar, makeTVar, parseTExp, unparseTExp, TVar, TExp } from './TExp51';
+import { isTVar, makeFreshTVar, makeTVar, parseTExp, unparseTExp, TVar, TExp, parseTE, tvarSetContents } from './TExp51';
 import { makeClassTExp, ClassTExp } from "./TExp51";
 
 /*
@@ -335,8 +335,71 @@ const parseClassExp = (params: Sexp[]): Result<ClassExp> =>
     (params.length != 4) || (params[0] != ':') ? makeFailure(`class must have shape (class [: <type>]? <fields> <methods>) - got ${params.length} params instead`) :
     parseGoodClassExp(params[1], params[2], params[3]);
 
-const parseGoodClassExp = (typeName: Sexp, varDecls: Sexp, bindings: Sexp): Result<ClassExp> =>
-    makeFailure("TODO parseGoodClassExp");
+const parseGoodClassExp = (typeName: Sexp, varDecls: Sexp, bindings: Sexp): Result<ClassExp> =>{
+    if(!isArray(varDecls) || !allT(isArray , varDecls)){
+        //console.log(varDecls)
+        //console.log(bindings)
+        return makeFailure("bad fileds Failure");
+    }
+    
+    if(!isGoodClassBindings(bindings)){
+        return makeFailure("bad methods Failure");
+    }
+    
+    const type_name:Result<TExp> = parseTExp(typeName)
+    console.log()
+    const ttttt:Result<TVar>  = bind(type_name , xx => isTVar(xx) ? makeOk(xx) : makeFailure("nishbar li"))
+    //console.log(ttttt)
+    const varsName:Result<VarDecl[]> = mapResult( b => bind(parseTExp(b[1]) , t => makeOk(makeVarDecl(b[0] ,t))) , varDecls);
+    const valsResult:Result<CExp[]> = mapResult(binding => parseL5CExp(second(binding)), bindings);
+    //const types:Result<TExp[]> = mapResult(b => parseTExp(b[1]) , bindings)
+    const bindingsResult:Result<Binding[]> = bind( varsName , n => bind(valsResult , r => makeOk(_merge_into_bindings(n ,r ,[]))))
+    //bind(valsResult, (vals: CExp[]) => makeOk(zipWith(makeBinding, varsName, vals)));
+    return bind(bindingsResult,(functions:Binding[]) => bind(varsName , nana => bind(ttttt, tn => makeOk(makeClassExp( tn,nana,functions)))));
+
+    //return safe2 ((functions:Binding[] ,type:Texp)=>makeOk(makeClassExp( type,map(makeVarDecl,fields),functions)));
+    // safe2((bdgs: string, body: string) => makeOk(`(let (${bdgs}) ${body})`))
+    // (unparseBindings(le.bindings, unparseWithTVars), unparseLExps(le.body, unparseWithTVars));
+
+    //return makeFailure("TODO parseGoodClassExp");
+}
+
+// const isGoodBindings = (bindings: Sexp): bindings is [string, Sexp][] =>
+//     isArray(bindings) &&
+//     allT(isArray, bindings) &&
+//     allT(isIdentifier, map(first, bindings));
+
+const _merge_into_bindings = (verD:VarDecl[],valsRes:CExp[] , acc:Binding[]):Binding[]=>
+{
+    if(isEmpty(valsRes) || isEmpty(verD)){
+        return acc;
+    }
+    else{
+        return _merge_into_bindings(rest(verD),rest(valsRes),acc.concat(makeBinding(verD[0] , valsRes[0])))
+    }
+}
+
+const isGoodClassBindings = (bindings: Sexp): bindings is [string, Sexp][] =>
+    isArray(bindings) &&
+    allT(isArray, bindings) &&
+    allT(isIdentifier, map(first, bindings))&&
+    allT(isArray, map(second, bindings));
+    
+
+// export const parseClassExp = (fields:Sexp,methods:Sexp): Result<ClassExp> =>{
+//     if(!isArray(fields) || !allT(isString, fields)){
+//     return makeFailure("bad fileds Failure");
+//     }
+//     if(!isGoodClassBindings(methods)){
+//     return makeFailure("bad methods Failure");
+//     }
+    
+//     const vars = map(b => b[0], methods);
+//     const valsResult = mapResult(binding => parseL31CExp(second(binding)), methods);
+//     const bindingsResult = bind(valsResult, (vals: CExp[]) => makeOk(zipWith(makeBinding, vars, vals)));
+//     return bind(bindingsResult,(functions:Binding[])=>makeOk(makeClassExp(map(makeVarDecl,fields),functions)));
+
+// }
 
 // sexps has the shape (quote <sexp>)
 export const parseLitExp = (param: Sexp): Result<LitExp> =>
@@ -448,9 +511,13 @@ const unparseClassExp = (ce: ClassExp, unparseWithTVars?: boolean): Result<strin
 // L51: Collect named types in AST
 // Collect class expressions in parsed AST so that they can be passed to the type inference module
 
-export const parsedToClassExps = (p: Parsed): ClassExp[] => 
+export const parsedToClassExps = (p: Parsed): ClassExp[] => {
     // TODO parsedToClassExps
-    [];
+    console.log(p)
+    return []
+    //return isProgram(p) ? reduce((acc , curr) => isClassExp(curr) ? acc.concat([curr]) : acc , p.exps) : []
+    //isExp(p) ? [] :;
+}
 
 // L51 
 export const classExpToClassTExp = (ce: ClassExp): ClassTExp => 
