@@ -337,37 +337,36 @@ const parseClassExp = (params: Sexp[]): Result<ClassExp> =>
 
 const parseGoodClassExp = (typeName: Sexp, varDecls: Sexp, bindings: Sexp): Result<ClassExp> =>{
     if(!isArray(varDecls) || !allT(isArray , varDecls)){
-        //console.log(varDecls)
-        //console.log(bindings)
         return makeFailure("bad fileds Failure");
     }
     
+
     if(!isGoodClassBindings(bindings)){
         return makeFailure("bad methods Failure");
     }
-    
+    //console.log(varDecls)
+    console.log(bindings)
     const type_name:Result<TExp> = parseTExp(typeName)
-    console.log()
-    const ttttt:Result<TVar>  = bind(type_name , xx => isTVar(xx) ? makeOk(xx) : makeFailure("nishbar li"))
-    //console.log(ttttt)
-    const varsName:Result<VarDecl[]> = mapResult( b => bind(parseTExp(b[1]) , t => makeOk(makeVarDecl(b[0] ,t))) , varDecls);
-    const valsResult:Result<CExp[]> = mapResult(binding => parseL5CExp(second(binding)), bindings);
-    //const types:Result<TExp[]> = mapResult(b => parseTExp(b[1]) , bindings)
-    const bindingsResult:Result<Binding[]> = bind( varsName , n => bind(valsResult , r => makeOk(_merge_into_bindings(n ,r ,[]))))
-    //bind(valsResult, (vals: CExp[]) => makeOk(zipWith(makeBinding, varsName, vals)));
-    return bind(bindingsResult,(functions:Binding[]) => bind(varsName , nana => bind(ttttt, tn => makeOk(makeClassExp( tn,nana,functions)))));
+    const tvar:Result<TVar>  = bind(type_name , tv => isTVar(tv) ? makeOk(tv) : makeFailure("type most be a symbol"))
+    const varsName:Result<VarDecl[]> = mapResult( b => bind(parseTExp(b[2]) , t => makeOk(makeVarDecl(b[0] ,t))) , varDecls);
+    const valsResult:Sexp[] = map(binding => binding[1], bindings);
+    //const valsResult:Result<CExp[]> = mapResult(binding => parseL5CExp(second(binding)), bindings);
+    const valsNames:string[] = map(binding =>  binding[0], bindings);
+    //console.log(JSON.stringify(varsName))
+    //console.log(JSON.stringify(valsResult))
+    
 
-    //return safe2 ((functions:Binding[] ,type:Texp)=>makeOk(makeClassExp( type,map(makeVarDecl,fields),functions)));
-    // safe2((bdgs: string, body: string) => makeOk(`(let (${bdgs}) ${body})`))
-    // (unparseBindings(le.bindings, unparseWithTVars), unparseLExps(le.body, unparseWithTVars));
 
-    //return makeFailure("TODO parseGoodClassExp");
+    const bindings1:Result<Binding[]> = mapResult(binding => bind(parseTExp(second(binding)[1]) ,
+        te =>  bind( parseL5CExp(second(binding)) ,
+        ce => makeOk(makeBinding(makeVarDecl(binding[0] , te), ce))))   ,bindings)
+    console.log("bindings 1  : "+JSON.stringify(bindings1))
+    const bindings2:Result<Binding[]> = _merge_into_bindings_new(valsNames , valsResult ,makeOk([]))
+    //const bindingsResult:Result<Binding[]> = bind( varsName , n => bind(valsResult , r => makeOk(_merge_into_bindings(n ,r ,[]))))
+    //console.log(JSON.stringify(bindings2))
+    return bind(bindings1,(functions:Binding[]) => bind(varsName , nana => bind(tvar, tn => makeOk(makeClassExp( tn,nana,functions)))));
 }
 
-// const isGoodBindings = (bindings: Sexp): bindings is [string, Sexp][] =>
-//     isArray(bindings) &&
-//     allT(isArray, bindings) &&
-//     allT(isIdentifier, map(first, bindings));
 
 const _merge_into_bindings = (verD:VarDecl[],valsRes:CExp[] , acc:Binding[]):Binding[]=>
 {
@@ -378,6 +377,22 @@ const _merge_into_bindings = (verD:VarDecl[],valsRes:CExp[] , acc:Binding[]):Bin
         return _merge_into_bindings(rest(verD),rest(valsRes),acc.concat(makeBinding(verD[0] , valsRes[0])))
     }
 }
+
+const _merge_into_bindings_new = (fund_names:string[],valsRes:Sexp[] , acc:Result<Binding[]>):Result<Binding[]>=>
+{
+    if(isEmpty(valsRes) || isEmpty(fund_names)){
+        return acc;
+    }
+    else{
+        const curr_var_decl:Result<VarDecl> = bind( parseTExp(valsRes[0]) , re => makeOk( makeVarDecl(fund_names[0],re)));
+        const to_add = bind(parseL5CExp(valsRes[0]) , x => bind( curr_var_decl , res => makeOk(makeBinding(res , x))));
+        const new_acc = bind(acc, curr_acc => bind(to_add, x => makeOk(curr_acc.concat(x))));
+        return _merge_into_bindings_new(rest(fund_names),rest(valsRes),new_acc);  
+    }
+
+
+}
+
 
 const isGoodClassBindings = (bindings: Sexp): bindings is [string, Sexp][] =>
     isArray(bindings) &&
@@ -513,7 +528,7 @@ const unparseClassExp = (ce: ClassExp, unparseWithTVars?: boolean): Result<strin
 
 export const parsedToClassExps = (p: Parsed): ClassExp[] => {
     // TODO parsedToClassExps
-    console.log(p)
+    //console.log(p)
     return []
     //return isProgram(p) ? reduce((acc , curr) => isClassExp(curr) ? acc.concat([curr]) : acc , p.exps) : []
     //isExp(p) ? [] :;
