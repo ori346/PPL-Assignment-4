@@ -5,13 +5,15 @@
 // L51 extends L5 with:
 // typed class construct
 
-import { concat, chain, join, map, zipWith, reduce } from "ramda";
+import { concat, chain, join, map, zipWith, reduce, flatten } from "ramda";
 import { Sexp, Token } from 's-expression';
 import { isCompoundSExp, isEmptySExp, isSymbolSExp, makeCompoundSExp, makeEmptySExp, makeSymbolSExp, SExpValue, valueToString } from '../imp/L5-value';
+import { makeEmptyTEnv, makeExtendTEnv, TEnv } from "../imp/TEnv";
 import { allT, first, rest, second, isEmpty } from '../shared/list';
 import { parse as p, isToken, isSexpString } from "../shared/parser";
 import { Result, bind, makeFailure, mapResult, makeOk, safe2, safe3 } from "../shared/result";
 import { isArray, isString, isNumericString, isIdentifier } from "../shared/type-predicates";
+import { inferTypeOf, typeofExp } from "./L51-typeinference";
 import { isTVar, makeFreshTVar, makeTVar, parseTExp, unparseTExp, TVar, TExp, parseTE, tvarSetContents } from './TExp51';
 import { makeClassTExp, ClassTExp } from "./TExp51";
 
@@ -340,30 +342,18 @@ const parseGoodClassExp = (typeName: Sexp, varDecls: Sexp, bindings: Sexp): Resu
         return makeFailure("bad fileds Failure");
     }
     
-
     if(!isGoodClassBindings(bindings)){
         return makeFailure("bad methods Failure");
     }
-    //console.log(varDecls)
-    console.log(bindings)
+    let tenv:TEnv = makeEmptyTEnv()
     const type_name:Result<TExp> = parseTExp(typeName)
     const tvar:Result<TVar>  = bind(type_name , tv => isTVar(tv) ? makeOk(tv) : makeFailure("type most be a symbol"))
-    const varsName:Result<VarDecl[]> = mapResult( b => bind(parseTExp(b[2]) , t => makeOk(makeVarDecl(b[0] ,t))) , varDecls);
-    const valsResult:Sexp[] = map(binding => binding[1], bindings);
-    //const valsResult:Result<CExp[]> = mapResult(binding => parseL5CExp(second(binding)), bindings);
-    const valsNames:string[] = map(binding =>  binding[0], bindings);
-    //console.log(JSON.stringify(varsName))
-    //console.log(JSON.stringify(valsResult))
-    
-
-
-    const bindings1:Result<Binding[]> = mapResult(binding => bind(parseTExp(second(binding)[1]) ,
-        te =>  bind( parseL5CExp(second(binding)) ,
-        ce => makeOk(makeBinding(makeVarDecl(binding[0] , te), ce))))   ,bindings)
-    console.log("bindings 1  : "+JSON.stringify(bindings1))
-    const bindings2:Result<Binding[]> = _merge_into_bindings_new(valsNames , valsResult ,makeOk([]))
-    //const bindingsResult:Result<Binding[]> = bind( varsName , n => bind(valsResult , r => makeOk(_merge_into_bindings(n ,r ,[]))))
-    //console.log(JSON.stringify(bindings2))
+    const varsName:Result<VarDecl[]> = mapResult( b => bind(parseTExp(b[2]) , t => { tenv = makeExtendTEnv([b[0]] , [t] ,tenv) ;return makeOk(makeVarDecl(b[0] ,t))}) , varDecls);
+    const bindings1:Result<Binding[]> = mapResult(binding =>  
+        bind( parseL5CExp(second(binding)) ,
+        ce => bind(typeofExp(ce , tenv) ,
+        te => makeOk(makeBinding(makeVarDecl(binding[0] , te), ce))))   ,bindings)
+    //console.log(JSON.stringify( bind(bindings1,(functions:Binding[]) => bind(varsName , nana => bind(tvar, tn => makeOk(makeClassExp( tn,nana,functions)))))))
     return bind(bindings1,(functions:Binding[]) => bind(varsName , nana => bind(tvar, tn => makeOk(makeClassExp( tn,nana,functions)))));
 }
 
@@ -528,11 +518,27 @@ const unparseClassExp = (ce: ClassExp, unparseWithTVars?: boolean): Result<strin
 
 export const parsedToClassExps = (p: Parsed): ClassExp[] => {
     // TODO parsedToClassExps
-    //console.log(p)
-    return []
-    //return isProgram(p) ? reduce((acc , curr) => isClassExp(curr) ? acc.concat([curr]) : acc , p.exps) : []
+    console.log("P : " + p)
+    //const output:ClassExp[] = ;
+    return isExp(p) && isClassExp(p) ? [p] :   
+    isProgram(p) ? flatten(map( x => parsedToClassExps(x) , p.exps))
+    : []
     //isExp(p) ? [] :;
+    //return []
 }
+
+// export const parsedToClassExps_2 = (p: Parsed): ClassExp[] => {
+//     // TODO parsedToClassExps
+//     if(isExp(p)){
+//         if(isClassExp(p))
+//         return [p]
+//     }
+//     if(isProgram(p)){
+//         p.exps
+//     }
+
+// }
+
 
 // L51 
 export const classExpToClassTExp = (ce: ClassExp): ClassTExp => 

@@ -103,7 +103,21 @@ const checkNoOccurrence = (tvar: T.TVar, te: T.TExp, exp: A.Exp): Result<true> =
 // For each class (class : typename ...) add a pair <class.typename classTExp> to TEnv
 export const makeTEnvFromClasses = (parsed: A.Parsed): E.TEnv => {
     // TODO makeTEnvFromClasses
+    const classs:A.ClassExp[] = A.parsedToClassExps(parsed)
+    //const ab:E.TEnv = map( (cla:A.ClassExp) => T.classTExpMethods(cla) ,classs)
     return E.makeEmptyTEnv();
+}
+
+export const makeTEnvFromClasses_2 = (parsed: A.Parsed): E.TEnv => {
+    // TODO makeTEnvFromClasses
+    const calss_env = E.makeEmptyTEnv();
+    const classs:A.ClassExp[] = A.parsedToClassExps(parsed);
+    if(isEmpty(classs)){
+        return E.makeEmptyTEnv();
+     }
+    // const class_Texp = makeClassTExp()
+    // calss_env = E.makeExtendTEnv(classs[0].typeName,,calss_env)
+     return calss_env
 }
 
 // Purpose: Compute the type of a concrete expression
