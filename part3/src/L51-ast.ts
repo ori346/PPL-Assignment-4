@@ -338,7 +338,7 @@ const parseClassExp = (params: Sexp[]): Result<ClassExp> =>
     parseGoodClassExp(params[1], params[2], params[3]);
 
 const parseGoodClassExp = (typeName: Sexp, varDecls: Sexp, bindings: Sexp): Result<ClassExp> =>{
-    if(!isArray(varDecls) || !allT(isArray , varDecls)){
+    if(!isArray(varDecls)){
         return makeFailure("bad fileds Failure");
     }
     

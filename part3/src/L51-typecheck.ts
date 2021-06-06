@@ -139,7 +139,7 @@ export const typeofProc = (proc: ProcExp, tenv: TEnv): Result<TExp> => {
 // then type<(rator rand1...randn)>(tenv) = t
 // We also check the correct number of arguments is passed.
 export const typeofApp = (app: AppExp, tenv: TEnv): Result<TExp> =>
-    bind(typeofExp(app.rator, tenv), (ratorTE: TExp) => {
+    bind(typeofExp(app.rator, tenv), (ratorTE: TExp) => { 
         if (! isProcTExp(ratorTE)) {
             return safe2((rator: string, exp: string) => makeFailure<TExp>(`Application of non-procedure: ${rator} in ${exp}`))
                     (unparseTExp(ratorTE), unparse(app));
@@ -210,13 +210,7 @@ export const typeofDefine = (exp: DefineExp, tenv: TEnv): Result<VoidTExp> => {
     const type = exp.var.texp
     const val = exp.val
     const val_type:Result<TExp> = typeofExp(exp.val,tenv);
-    //console.log("!!!!!" + val_type + "!!!!!")
     const constraint1:Result<boolean> = bind(val_type, val_type => checkEqualType(val_type, exp.var.texp, exp));
-    //bind(typeofExp(exp.val,tenv) , x => makeOk(makeExtendTEnv([exp.var.var] , [x] , tenv)) )
-    // if(isEmptyTEnv(tenv)) 
-    //     bind( val_type , t => makeOk(tenv = makeExtendTEnv([exp.var.var], [t] ,tenv)))
-    // else if(isExtendTEnv(tenv))
-    //     bind(val_type , t => makeOk(tenv = makeExtendTEnv(tenv)))
     return bind(constraint1,_ =>{ 
         console.log("define!!!")
         return makeOk(makeVoidTExp())});
