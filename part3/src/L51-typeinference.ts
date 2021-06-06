@@ -306,21 +306,18 @@ const typeofProgramExps = (exp: A.Exp, exps: A.Exp[], tenv: E.TEnv): Result<T.TE
 //      - Only need to cover the case of Symbol and Pair
 //      - for a symbol - record the value of the symbol in the SymbolTExp
 //        so that precise type checking can be made on ground symbol values.
-export const typeofLit = (exp: A.LitExp): Result<T.TExp> =>{
-    // return  V.isSymbolSExp(exp) ? makeOk(T.makeSymbolTExp(exp.val)) :
-    //         V.isC
-    //console.log(exp)
-    if(V.isSymbolSExp(exp.val)){
-        //console.log(exp.val)
-        return makeOk(T.makeSymbolTExp(exp.val));
-
-    }else if(V.isCompoundSExp(exp.val)){
-        //console.log("is compund ")
-        return makeOk(T.makePairTExp())
-    }
-    else{
-        return makeFailure(`lit exp must be symbol`);
-    }
+export const typeofLit = (exp: A.LitExp): Result<T.TExp> =>{ 
+    return V.isSymbolSExp(exp.val) ? makeOk(T.makeSymbolTExp(exp.val)) :
+    V.isCompoundSExp(exp.val) ? makeOk(T.makePairTExp()) :
+    makeFailure(`lit exp must be symbol`);
+    // if(V.isSymbolSExp(exp.val)){
+    //     return makeOk(T.makeSymbolTExp(exp.val));
+    // }else if(V.isCompoundSExp(exp.val)){
+    //     return makeOk(T.makePairTExp())
+    // }
+    // else{
+    //     return makeFailure(`lit exp must be symbol`);
+    // }
 }
 
 // Purpose: compute the type of a set! expression

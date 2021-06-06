@@ -1,7 +1,5 @@
 /* 2.1 */
 
-import { reject } from "ramda"
-
 
 
 export const MISSING_KEY = '___MISSING___'
@@ -52,19 +50,14 @@ export function getAll<K, V>(store: PromisedStore<K, V>, keys: K[]): Promise<V[]
 // ??? (you may want to add helper functions here)
 //
 
-async function containElement<T,R> ( element:T ,store:PromisedStore<T,R>):Promise<boolean> {
-    //console.log(store.get(element))
-    const x = await store.get(element)
-    return await store.get(element) !== undefined
-} 
 
 export function asycMemo<T, R>(f: (param: T) => R): (param: T) => Promise<R> {
     const store: PromisedStore<T, R> = makePromisedStore()
-    const map:Map<T , Boolean> = new Map()
+    const map: Map<T, Boolean> = new Map()
     return async (param: T): Promise<R> => {
-        if(!map.get(param)){
+        if (!map.get(param)) {
             store.set(param, f(param))
-            map.set(param ,true)
+            map.set(param, true)
         }
         return store.get(param)
     }
@@ -77,15 +70,15 @@ export function asycMemo<T, R>(f: (param: T) => R): (param: T) => Promise<R> {
 
 export function lazyFilter<T>(genFn: () => Generator<T>, filterFn: (pred: T) => boolean): () => Generator<T> {
     return function* (): Generator<T> {
-        for (let x of genFn())
+        for (const x of genFn())
             if (filterFn(x))
                 yield x;
     }
 }
 
-export function lazyMap<T, R>(genFn: () => Generator<T>, mapFn: (curr: T) => R): () => Generator<R> { 
-    return function * () {
-        for (let x of genFn()) {
+export function lazyMap<T, R>(genFn: () => Generator<T>, mapFn: (curr: T) => R): () => Generator<R> {
+    return function* () {
+        for (const x of genFn()) {
             yield mapFn(x)
         }
     }
@@ -100,6 +93,5 @@ export async function asyncWaterfallWithRetry(fns: [() => Promise<any>, ...((v: 
             return fns[0]().then(x => accept(x))
         return fns[0]().then((y => accept(asyncWaterfallWithRetry([() => fns[1](y), ...fns.slice(2)]))))
             .catch((z => setTimeout(() => accept(asyncWaterfallWithRetry(fns)), 2000))).catch(() => reject())
-
     })
 }
