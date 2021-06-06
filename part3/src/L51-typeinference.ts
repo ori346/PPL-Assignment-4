@@ -349,20 +349,30 @@ export const typeofClass = (exp: A.ClassExp, tenv: E.TEnv): Result<T.TExp> => {
     const fildes = R.map((x:A.VarDecl)=>x.var ,exp.fields);
     const fildesTEs = R.map((vd) => vd.texp, exp.fields);
     const extTEnv = E.makeExtendTEnv(fildes, fildesTEs, tenv);
-    //const constraint1 = 
+    const constraint = mapResult((bindi:A.Binding)=>make_func_constraint(bindi,tenv),exp.methods)
+    return bind(constraint, _ => makeOk(T.makeClassTExp(argsTEs, proc.returnTE)));
     const funcs = R.map((x:A.Binding)=>x.var ,exp.methods);
     //return makeOk(T.makeClassTExp())
-    return makeFailtypeofClassure("TODO typeofClass");
+    //return makeFailtypeofClassure("TODO typeofClass");
 };
 
-// // Purpose: compute the type of a proc-exp
-// // Typing rule:
-// // If   type<body>(extend-tenv(x1=t1,...,xn=tn; tenv)) = t
-// // then type<lambda (x1:t1,...,xn:tn) : t exp)>(tenv) = (t1 * ... * tn -> t)
-// export const typeofProc2 = (proc: A.ProcExp, tenv: E.TEnv): Result<T.TExp> => {
-//     const argsTEs = R.map((vd) => vd.texp, proc.args);
-//     const extTEnv = E.makeExtendTEnv(R.map((vd) => vd.var, proc.args), argsTEs, tenv);
-//     const constraint1 = bind(typeofExps(proc.body, extTEnv), (bodyTE: T.TExp) => checkEqualType(bodyTE, proc.returnTE, proc));
-//     return bind(constraint1, _ => makeOk(T.makeProcTExp(argsTEs, proc.returnTE)));
-// };
+// // L51 
+// export const classExpToClassTExp = (ce: ClassExp): ClassTExp => 
+//     makeClassTExp(ce.typeName.var, map((binding: Binding) => [binding.var.var, binding.var.texp], ce.methods));
+    
+
+const make_func_constraint = (bindi:A.Binding,tenv: E.TEnv):Result<true> => 
+    bind(typeofExp(bindi.val, tenv), (bodyTE: T.TExp) => checkEqualType(bodyTE, bindi.var.texp, bindi.val));
+
+
+// Purpose: compute the type of a proc-exp
+// Typing rule:
+// If   type<body>(extend-tenv(x1=t1,...,xn=tn; tenv)) = t
+// then type<lambda (x1:t1,...,xn:tn) : t exp)>(tenv) = (t1 * ... * tn -> t)
+export const typeofProc2 = (proc: A.ProcExp, tenv: E.TEnv): Result<T.TExp> => {
+    const argsTEs = R.map((vd) => vd.texp, proc.args);
+    const extTEnv = E.makeExtendTEnv(R.map((vd) => vd.var, proc.args), argsTEs, tenv);
+    const constraint1 = bind(typeofExps(proc.body, extTEnv), (bodyTE: T.TExp) => checkEqualType(bodyTE, proc.returnTE, proc));
+    return bind(constraint1, _ => makeOk(T.makeProcTExp(argsTEs, proc.returnTE)));
+};
 
