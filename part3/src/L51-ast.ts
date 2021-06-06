@@ -345,17 +345,40 @@ const parseGoodClassExp = (typeName: Sexp, varDecls: Sexp, bindings: Sexp): Resu
     if(!isGoodClassBindings(bindings)){
         return makeFailure("bad methods Failure");
     }
-    let tenv:TEnv = makeEmptyTEnv()
-    const type_name:Result<TExp> = parseTExp(typeName)
-    const tvar:Result<TVar>  = bind(type_name , tv => isTVar(tv) ? makeOk(tv) : makeFailure("type most be a symbol"))
-    const varsName:Result<VarDecl[]> = mapResult( b => bind(parseTExp(b[2]) , t => { tenv = makeExtendTEnv([b[0]] , [t] ,tenv) ;return makeOk(makeVarDecl(b[0] ,t))}) , varDecls);
-    const bindings1:Result<Binding[]> = mapResult(binding =>  
-        bind( parseL5CExp(second(binding)) ,
-        ce => bind(typeofExp(ce , tenv) ,
-        te => makeOk(makeBinding(makeVarDecl(binding[0] , te), ce))))   ,bindings)
-    //console.log(JSON.stringify( bind(bindings1,(functions:Binding[]) => bind(varsName , nana => bind(tvar, tn => makeOk(makeClassExp( tn,nana,functions)))))))
-    return bind(bindings1,(functions:Binding[]) => bind(varsName , nana => bind(tvar, tn => makeOk(makeClassExp( tn,nana,functions)))));
-}
+
+    if(! isString(typeName)){return makeFailure("typename musr be string")} 
+    const t_name = makeTVar(typeName)
+    const args = mapResult(parseVarDecl, varDecls);
+    const functions  = safe2((vds: VarDecl[], vals: CExp[]) => makeOk(zipWith(makeBinding, vds, vals)))
+    (mapResult(parseVarDecl, map(b => b[0], bindings)), 
+     mapResult(parseL5CExp, map(b => b[1], bindings)));
+      return safe2((ar:VarDecl[],funcs:Binding[]) => makeOk(makeClassExp(t_name,ar,funcs)))(args,functions);
+    
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+//     let tenv:TEnv = makeEmptyTEnv()
+//     const type_name:Result<TExp> = parseTExp(typeName)
+//     const tvar:Result<TVar>  = bind(type_name , tv => isTVar(tv) ? makeOk(tv) : makeFailure("type most be a Tvar"))
+//     const varsName:Result<VarDecl[]> = mapResult( b => bind(parseTExp(b[2]) , t => { tenv = makeExtendTEnv([b[0]] , [t] ,tenv) ;return makeOk(makeVarDecl(b[0] ,t))}) , varDecls);
+//     const bindings1:Result<Binding[]> = mapResult(binding =>  
+//         bind( parseL5CExp(second(binding)) ,
+//         ce => bind(typeofExp(ce , tenv) ,
+//         te => makeOk(makeBinding(makeVarDecl(binding[0] , te), ce))))   ,bindings)
+//     //console.log(JSON.stringify( bind(bindings1,(functions:Binding[]) => bind(varsName , nana => bind(tvar, tn => makeOk(makeClassExp( tn,nana,functions)))))))
+//     return bind(bindings1,(functions:Binding[]) => bind(varsName , nana => bind(tvar, tn => makeOk(makeClassExp( tn,nana,functions)))));
+// }
 
 
 const _merge_into_bindings = (verD:VarDecl[],valsRes:CExp[] , acc:Binding[]):Binding[]=>
@@ -516,28 +539,44 @@ const unparseClassExp = (ce: ClassExp, unparseWithTVars?: boolean): Result<strin
 // L51: Collect named types in AST
 // Collect class expressions in parsed AST so that they can be passed to the type inference module
 
-export const parsedToClassExps = (p: Parsed): ClassExp[] => {
-    // TODO parsedToClassExps
-    console.log("P : " + p)
-    //const output:ClassExp[] = ;
-    return isExp(p) && isClassExp(p) ? [p] :   
-    isProgram(p) ? flatten(map( x => parsedToClassExps(x) , p.exps))
-    : []
-    //isExp(p) ? [] :;
-    //return []
-}
+export const parsedToClassExps = (p: Parsed): ClassExp[] => 
+    isNumExp(p) ? [] :
+    isBoolExp(p) ? [] :
+    isStrExp(p) ? [] :
+    isPrimOp(p) ? [] :
+    isVarRef(p) ?  []:
+    isIfExp(p) ? parsedToClassExps(p.then).concat(parsedToClassExps(p.alt)) :
+    isProcExp(p) ?  reduce((acc:ClassExp[],curr:CExp)=> acc.concat(parsedToClassExps(curr)),[] ,p.body):
+    isAppExp(p) ? parsedToClassExps(p.rator).concat(flatten(map(parsedToClassExps,p.rands))):
+    isLetExp(p) ? flatten(map(parsedToClassExps,map((x:Binding)=>x.val,p.bindings))).concat(
+        reduce((acc:ClassExp[],curr:CExp)=> acc.concat(parsedToClassExps(curr)),[] ,p.body)
+    ):
+    isLetrecExp(p) ? flatten(map(parsedToClassExps,map((x:Binding)=>x.val,p.bindings))).concat(
+        reduce((acc:ClassExp[],curr:CExp)=> acc.concat(parsedToClassExps(curr)),[] ,p.body)):
+    isDefineExp(p) ? parsedToClassExps(p.val) :
+    isProgram(p) ? flatten(map(parsedToClassExps,p.exps)) :
+    isSetExp(p) ? parsedToClassExps(p.val):
+    isClassExp(p) ? [p]:
+    isLitExp(p) ? []:
+    []
 
-// export const parsedToClassExps_2 = (p: Parsed): ClassExp[] => {
+
+
+
+// export const parsedToClassExps = (p: Parsed): ClassExp[] => {
+
+    
 //     // TODO parsedToClassExps
-//     if(isExp(p)){
-//         if(isClassExp(p))
-//         return [p]
-//     }
-//     if(isProgram(p)){
-//         p.exps
-//     }
-
+//     console.log("P : " + p)
+//     //const output:ClassExp[] = ;
+//     return isExp(p) && isClassExp(p) ? [p] :   
+//     isProgram(p) ? flatten(map( x => parsedToClassExps(x) , p.exps))
+//     : []
+//     //isExp(p) ? [] :;
+//     //return []
 // }
+
+
 
 
 // L51 
