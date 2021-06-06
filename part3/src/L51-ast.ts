@@ -346,27 +346,15 @@ const parseGoodClassExp = (typeName: Sexp, varDecls: Sexp, bindings: Sexp): Resu
         return makeFailure("bad methods Failure");
     }
 
-    if(! isString(typeName)){return makeFailure("typename musr be string")} 
-    const t_name = makeTVar(typeName)
-    const args = mapResult(parseVarDecl, varDecls);
-    const functions  = safe2((vds: VarDecl[], vals: CExp[]) => makeOk(zipWith(makeBinding, vds, vals)))
+    if(!isString(typeName)){return makeFailure("typename musr be string")} 
+    const t_name:TVar = makeTVar(typeName)
+    const args:Result<VarDecl[]> = mapResult(parseVarDecl, varDecls);
+    const functions: Result<Binding[]>  = safe2((vds: VarDecl[], vals: CExp[]) => makeOk(zipWith(makeBinding, vds, vals)))
     (mapResult(parseVarDecl, map(b => b[0], bindings)), 
      mapResult(parseL5CExp, map(b => b[1], bindings)));
       return safe2((ar:VarDecl[],funcs:Binding[]) => makeOk(makeClassExp(t_name,ar,funcs)))(args,functions);
     
     }
-
-
-
-
-
-
-
-
-
-
-
-
 
 //     let tenv:TEnv = makeEmptyTEnv()
 //     const type_name:Result<TExp> = parseTExp(typeName)

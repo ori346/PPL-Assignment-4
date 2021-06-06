@@ -92,6 +92,17 @@ export async function asyncWaterfallWithRetry(fns: [() => Promise<any>, ...((v: 
         if (fns.length === 1)
             return fns[0]().then(x => accept(x))
         return fns[0]().then((y => accept(asyncWaterfallWithRetry([() => fns[1](y), ...fns.slice(2)]))))
-            .catch((z => setTimeout(() => accept(asyncWaterfallWithRetry(fns)), 2000))).catch(() => reject())
+            .catch((z => setTimeout(() => asyncWaterfallWithRetry2(fns ,2).then( x => accept(x)).catch(() => reject(z)), 2000))).catch(() => reject())
+    })
+}
+
+export async function asyncWaterfallWithRetry2(fns: [() => Promise<any>, ...((v: any) => Promise<any>)[]] , tries:number): Promise<any> {
+    return new Promise<any>((accept, reject) => {
+        if(tries == 0)
+            reject()
+        if (fns.length === 1)
+            return fns[0]().then(x => accept(x))
+        return fns[0]().then((y => accept(asyncWaterfallWithRetry([() => fns[1](y), ...fns.slice(2)]))))
+            .catch((z => setTimeout(() => asyncWaterfallWithRetry2(fns ,tries -1).then( x => accept(x)).catch(() => reject(z)), 2000))).catch(() => reject())
     })
 }

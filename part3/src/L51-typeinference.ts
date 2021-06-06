@@ -102,14 +102,21 @@ const checkNoOccurrence = (tvar: T.TVar, te: T.TExp, exp: A.Exp): Result<true> =
 // Initialize the TEnv with all defined classes 
 // so that the user defined types are known to the type inference system.
 // For each class (class : typename ...) add a pair <class.typename classTExp> to TEnv
-export const makeTEnvFromClasses = (parsed: A.Parsed): E.TEnv => {
-    // TODO makeTEnvFromClasses
-    const classs:A.ClassExp[] = A.parsedToClassExps(parsed)
-    //const ab:E.TEnv = map( (cla:A.ClassExp) => T.classTExpMethods(cla) ,classs)
-    return E.makeEmptyTEnv();
-}
+// export const makeTEnvFromClasses = (parsed: A.Parsed): E.TEnv => {
+//     // TODO makeTEnvFromClasses
+//     const classs:A.ClassExp[] = A.parsedToClassExps(parsed)
+//     //const tenv:E.TEnv = map(cl:A.ClassExp =>  ,classs)
+//     //const ab:E.TEnv = map( (cla:A.ClassExp) => T.classTExpMethods(cla) ,classs)
+//     return E.makeEmptyTEnv();
+// }
 
-export const makeTEnvFromClasses_2 = (parsed: A.Parsed): E.TEnv => {
+// const makeTEnvHelper = (cl:A.ClassExp[] , tnv:E.TEnv):E.TEnv =>{
+//     isEmpty(cl) ? tnv :
+//     makeTEnvHelper(rest(cl) ,E.makeExtendTEnv(first(cl). , first(cl). ,tnv))
+//     //return E.makeEmptyTEnv()
+// }
+
+export const makeTEnvFromClasses = (parsed: A.Parsed): E.TEnv => {
     // TODO makeTEnvFromClasses
     const calss_env = E.makeEmptyTEnv();
     const classs:A.ClassExp[] = A.parsedToClassExps(parsed);
@@ -117,7 +124,7 @@ export const makeTEnvFromClasses_2 = (parsed: A.Parsed): E.TEnv => {
         return E.makeEmptyTEnv();
      }
     
-    const class_Texp = R.map((ind:number)=> T.makeClassTExp(classs[ind].typeName.var,R.map((x:A.Binding)=>[x.var.var,x.var.texp], classs[ind].methods)),R.range(0,classs.length)); // maby its classs.length -1     
+    const class_Texp = R.map((ind:number)=> T.makeClassTExp(classs[ind].typeName.var,R.map((x:A.Binding)=>[x.var.var,x.var.texp], classs[ind].methods)), R.range(0,classs.length)); // maby its classs.length -1     
     return E.makeExtendTEnv(R.map((ind:number)=> classs[ind].typeName.var,R.range(0,classs.length)),class_Texp,calss_env)
      
 }
@@ -343,13 +350,13 @@ export const typeofSet = (exp: A.SetExp, tenv: E.TEnv): Result<T.VoidTExp> => {
 // Then type<class(type fields methods)>(tend) = = [t1 * ... * tn -> type]
 export const typeofClass = (exp: A.ClassExp, tenv: E.TEnv): Result<T.TExp> => {
     console.log(exp)
-    const fildes = R.map((x:A.VarDecl)=>x.var ,exp.fields);
-    const fildesTEs = R.map((vd) => vd.texp, exp.fields);
-    const extTEnv = E.makeExtendTEnv(fildes, fildesTEs, tenv);
+    const fildes:string[] = R.map((x:A.VarDecl)=>x.var ,exp.fields);
+    const fildesTEs:T.TExp[] = R.map((vd) => vd.texp, exp.fields);
+    const extTEnv:E.TEnv = E.makeExtendTEnv(fildes, fildesTEs, tenv);
     //const constraint1 = 
-    const funcs = R.map((x:A.Binding)=>x.var ,exp.methods);
-    //return makeOk(T.makeClassTExp())
-    return makeFailtypeofClassure("TODO typeofClass");
+    const funcs:A.VarDecl[] = R.map((x:A.Binding)=>x.var ,exp.methods);
+    return makeFailure("not implemnted yet")
+    //return makeFailtypeofClassure("TODO typeofClass");
 };
 
 // // Purpose: compute the type of a proc-exp

@@ -65,63 +65,63 @@ describe('2.3 (lazy generators)', () => {
     })
 })
 
-// describe('2.4 (asyncWaterfallWithRetry)', () => {
-//     it('executes sequence', async () => {
-//         const v = await asyncWaterfallWithRetry([async () => 1, async v => v + 1, async v => v * 2])
-//         expect(v).to.equal(4);
-//     })
-//     it('retries twice --> needs to be around 4,000', async () => {
-//         let attempt = 1
-//         const v = await asyncWaterfallWithRetry([async () => 1, async v => {
-//             if (attempt == 3)
-//                 return v + 1
-//             attempt += 1
-//             throw Error()
-//         }, async v => v * 2])
-//         expect(v).to.equal(4)
-//     }).timeout(5000)
+describe('2.4 (asyncWaterfallWithRetry)', () => {
+    it('executes sequence', async () => {
+        const v = await asyncWaterfallWithRetry([async () => 1, async v => v + 1, async v => v * 2])
+        expect(v).to.equal(4);
+    })
+    it('retries twice --> needs to be around 4,000', async () => {
+        let attempt = 1
+        const v = await asyncWaterfallWithRetry([async () => 1, async v => {
+            if (attempt == 3)
+                return v + 1
+            attempt += 1
+            throw Error()
+        }, async v => v * 2])
+        expect(v).to.equal(4)
+    }).timeout(7000)
 
 
-//     it('retries 4 times --> needs to be around 8,000', async () => {
-//         let attempt = 1
-//         let attempt2 = 1
-//         const v = await asyncWaterfallWithRetry([async () => 1, async v => {
-//             if (attempt == 3)
-//                 return v + 1
-//             attempt += 1
-//             throw Error()
-//         },async v => {
-//             if (attempt2 == 3)
-//                 return v + 1
-//             attempt2 += 1
-//             throw Error()
-//         },
-//             async v => v * 2])
-//         expect(v).to.equal(6)
-//     }).timeout(10000)
+    it('retries 4 times --> needs to be around 8,000', async () => {
+        let attempt = 1
+        let attempt2 = 1
+        const v = await asyncWaterfallWithRetry([async () => 1, async v => {
+            if (attempt == 3)
+                return v + 1
+            attempt += 1
+            throw Error()
+        },async v => {
+            if (attempt2 == 3)
+                return v + 1
+            attempt2 += 1
+            throw Error()
+        },
+            async v => v * 2])
+        expect(v).to.equal(6)
+    }).timeout(10000)
 
 
-//     it('retries 6 times --> needs to be around 12,000', async () => {
-//         let attempt1 = 1
-//         let attempt = 1
-//         let attempt2 = 1
-//         const v = await asyncWaterfallWithRetry([async () => {
-//             if (attempt1 == 3)
-//                 return 1
-//             attempt1 += 1
-//             throw Error()
-//         }, async v => {
-//             if (attempt == 3)
-//                 return v + 1
-//             attempt += 1
-//             throw Error()
-//         },async v => {
-//             if (attempt2 == 3)
-//                 return v + 1
-//             attempt2 += 1
-//             throw Error()
-//         },
-//             async v => v * 2])
-//         expect(v).to.equal(6)
-//     }).timeout(15000)
-// })
+    it('retries 6 times --> needs to be around 12,000', async () => {
+        let attempt1 = 1
+        let attempt = 1
+        let attempt2 = 1
+        const v = await asyncWaterfallWithRetry([async () => {
+            if (attempt1 == 3)
+                return 1
+            attempt1 += 1
+            throw Error()
+        }, async v => {
+            if (attempt == 3)
+                return v + 1
+            attempt += 1
+            throw Error()
+        },async v => {
+            if (attempt2 == 3)
+                return v + 1
+            attempt2 += 1
+            throw Error()
+        },
+            async v => v * 2])
+        expect(v).to.equal(6)
+    }).timeout(15000)
+ })
