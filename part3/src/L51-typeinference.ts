@@ -9,6 +9,7 @@ import * as T from "./TExp51";
 import { allT, first, rest, isEmpty } from "../shared/list";
 import { isNumber, isString } from '../shared/type-predicates';
 import { Result, makeFailure, makeOk, bind, safe2, zipWithResult, mapResult } from "../shared/result";
+import { parse } from "../shared/parser";
 
 // Purpose: Make type expressions equivalent by deriving a unifier
 // Return an error if the types are not unifiable.
@@ -115,9 +116,10 @@ export const makeTEnvFromClasses_2 = (parsed: A.Parsed): E.TEnv => {
     if(isEmpty(classs)){
         return E.makeEmptyTEnv();
      }
-    // const class_Texp = makeClassTExp()
-    // calss_env = E.makeExtendTEnv(classs[0].typeName,,calss_env)
-     return calss_env
+    
+    const class_Texp = R.map((ind:number)=> T.makeClassTExp(classs[ind].typeName.var,R.map((x:A.Binding)=>[x.var.var,x.var.texp], classs[ind].methods)),R.range(0,classs.length)); // maby its classs.length -1     
+    return E.makeExtendTEnv(R.map((ind:number)=> classs[ind].typeName.var,R.range(0,classs.length)),class_Texp,calss_env)
+     
 }
 
 // Purpose: Compute the type of a concrete expression
@@ -273,7 +275,7 @@ export const typeofProgram = (exp: A.Program, tenv: E.TEnv): Result<T.TExp> =>{
         const exps = exp.exps;
         const expsf = first(exps);
         const expsr = rest(exps);
-         ;return typeofProgramExps(expsf,expsr, tenv);
+         return typeofProgramExps(expsf,expsr, tenv);
         }
     
 }
@@ -335,11 +337,29 @@ export const typeofSet = (exp: A.SetExp, tenv: E.TEnv): Result<T.VoidTExp> => {
 // Purpose: compute the type of a class-exp(type fields methods)
 // Typing rule:
 // let class-tenv = extend-tenv(field1=t1,...,fieldn=tn)
-// If   type<method_1>(class-tenv) = m1
+// If   type<pro>(class-tenv) = m1
 //      ...
 //      type<method_k>(class-tenv) = mk
 // Then type<class(type fields methods)>(tend) = = [t1 * ... * tn -> type]
 export const typeofClass = (exp: A.ClassExp, tenv: E.TEnv): Result<T.TExp> => {
-    //console.log(exp)
-    return makeFailure("TODO typeofClass");
+    console.log(exp)
+    const fildes = R.map((x:A.VarDecl)=>x.var ,exp.fields);
+    const fildesTEs = R.map((vd) => vd.texp, exp.fields);
+    const extTEnv = E.makeExtendTEnv(fildes, fildesTEs, tenv);
+    //const constraint1 = 
+    const funcs = R.map((x:A.Binding)=>x.var ,exp.methods);
+    //return makeOk(T.makeClassTExp())
+    return makeFailtypeofClassure("TODO typeofClass");
 };
+
+// // Purpose: compute the type of a proc-exp
+// // Typing rule:
+// // If   type<body>(extend-tenv(x1=t1,...,xn=tn; tenv)) = t
+// // then type<lambda (x1:t1,...,xn:tn) : t exp)>(tenv) = (t1 * ... * tn -> t)
+// export const typeofProc2 = (proc: A.ProcExp, tenv: E.TEnv): Result<T.TExp> => {
+//     const argsTEs = R.map((vd) => vd.texp, proc.args);
+//     const extTEnv = E.makeExtendTEnv(R.map((vd) => vd.var, proc.args), argsTEs, tenv);
+//     const constraint1 = bind(typeofExps(proc.body, extTEnv), (bodyTE: T.TExp) => checkEqualType(bodyTE, proc.returnTE, proc));
+//     return bind(constraint1, _ => makeOk(T.makeProcTExp(argsTEs, proc.returnTE)));
+// };
+
