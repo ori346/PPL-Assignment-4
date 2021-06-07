@@ -190,7 +190,6 @@ export const parseTE = (t: string): Result<TExp> =>
 ;; parseTExp('symbol-a-b') => '(symbol-te a-b)'
 */
 export const parseTExp = (texp: Sexp): Result<TExp> => {
-    //console.log(texp)
     return (texp === "number") ? makeOk(makeNumTExp()) :
     (texp === "boolean") ? makeOk(makeBoolTExp()) :
     (texp === "void") ? makeOk(makeVoidTExp()) :
@@ -328,7 +327,6 @@ const matchTVarsInTE = <T1, T2>(te1: TExp, te2: TExp,
                                 succ: (mapping: Array<Pair<TVar, TVar>>) => T1,
                                 fail: () => T2): T1 | T2 => {
 
-    // console.log("Comparing 2 Texps: %j - %j", te1, te2);
 
     return (isTVar(te1) || isTVar(te2)) ? matchTVarsinTVars(tvarDeref(te1), tvarDeref(te2), succ, fail) :
     (isAtomicTExp(te1) || isAtomicTExp(te2)) ?
@@ -350,9 +348,6 @@ const matchTVarsInTProcs = <T1, T2>(te1: ProcTExp, te2: ProcTExp,
         succ: (mapping: Array<Pair<TVar, TVar>>) => T1,
         fail: () => T2): T1 | T2 => {
 
-    // safe2((t1, t2) => makeOk(console.log("Comparing 2 proc-texps: %j - %j", t1, t2)))
-    //  (unparseTExp(te1), unparseTExp(te2));
-
     return matchTVarsInTEs(procTExpComponents(te1), procTExpComponents(te2), succ, fail);
 }
 
@@ -361,8 +356,6 @@ const matchTVarsInClasses = <T1, T2>(te1: ClassTExp, te2: ClassTExp,
         succ: (mapping: Array<Pair<TVar, TVar>>) => T1,
         fail: () => T2): T1 | T2 => {
 
-    // console.log("Comparing 2 class-texps: %j - %j", te1.typename, te2.typename);
-    // console.log("Methods: %j - %j", classTExpMethods(te1), classTExpMethods(te2));
 
     return !equals(classTExpMethods(te1), classTExpMethods(te2)) ? fail() :
     te1.typename != te2.typename ? succ([{left: makeTVar(te1.typename), right: makeTVar(te2.typename)}]) : 
@@ -387,9 +380,7 @@ const matchTVarsInTEs = <T1, T2>(te1: TExp[], te2: TExp[],
 // Example:  equivalentTEs(parseTExp('(T1 * (Number -> T2) -> T3))',
 //                         parseTExp('(T4 * (Number -> T5) -> T6))') => #t
 export const equivalentTEs = (te1: TExp, te2: TExp): boolean => {
-    // console.log(`EqTEs ${JSON.stringify(te1, null, 4)} - ${JSON.stringify(te2, null, 4)}`);
     const tvarsPairs = matchTVarsInTE(te1, te2, (x) => x, () => false);
-    // console.log(`EqTEs pairs = %j`, tvarsPairs);
     if (isBoolean(tvarsPairs))
         return false;
     else {

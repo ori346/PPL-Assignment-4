@@ -520,24 +520,6 @@ export const parsedToClassExps = (p: Parsed): ClassExp[] =>
     []
 
 
-
-
-// export const parsedToClassExps = (p: Parsed): ClassExp[] => {
-
-    
-//     // TODO parsedToClassExps
-//     console.log("P : " + p)
-//     //const output:ClassExp[] = ;
-//     return isExp(p) && isClassExp(p) ? [p] :   
-//     isProgram(p) ? flatten(map( x => parsedToClassExps(x) , p.exps))
-//     : []
-//     //isExp(p) ? [] :;
-//     //return []
-// }
-
-
-
-
 // L51 
 export const classExpToClassTExp = (ce: ClassExp): ClassTExp => 
     makeClassTExp(ce.typeName.var, map((binding: Binding) => [binding.var.var, binding.var.texp], ce.methods));

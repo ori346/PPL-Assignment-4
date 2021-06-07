@@ -102,19 +102,6 @@ const checkNoOccurrence = (tvar: T.TVar, te: T.TExp, exp: A.Exp): Result<true> =
 // Initialize the TEnv with all defined classes 
 // so that the user defined types are known to the type inference system.
 // For each class (class : typename ...) add a pair <class.typename classTExp> to TEnv
-// export const makeTEnvFromClasses = (parsed: A.Parsed): E.TEnv => {
-//     // TODO makeTEnvFromClasses
-//     const classs:A.ClassExp[] = A.parsedToClassExps(parsed)
-//     //const tenv:E.TEnv = map(cl:A.ClassExp =>  ,classs)
-//     //const ab:E.TEnv = map( (cla:A.ClassExp) => T.classTExpMethods(cla) ,classs)
-//     return E.makeEmptyTEnv();
-// }
-
-// const makeTEnvHelper = (cl:A.ClassExp[] , tnv:E.TEnv):E.TEnv =>{
-//     isEmpty(cl) ? tnv :
-//     makeTEnvHelper(rest(cl) ,E.makeExtendTEnv(first(cl). , first(cl). ,tnv))
-//     //return E.makeEmptyTEnv()
-// }
 
 export const makeTEnvFromClasses = (parsed: A.Parsed): E.TEnv => {
     // TODO makeTEnvFromClasses
@@ -134,7 +121,6 @@ export const inferTypeOf = (concreteExp: string): Result<string> =>
     bind(A.parse(concreteExp), 
          parsed => {
             const tenv =  makeTEnvFromClasses(parsed);  // L51
-            // console.log(`tenv = ${tenv}`);
             return bind(typeofExp(parsed, tenv),
                         T.unparseTExp);
          });
@@ -142,7 +128,6 @@ export const inferTypeOf = (concreteExp: string): Result<string> =>
 // Purpose: Compute the type of an expression
 // Traverse the AST and check the type according to the exp type.
 export const typeofExp = (exp: A.Parsed, tenv: E.TEnv): Result<T.TExp> =>{
-    //console.log(exp)
     return A.isNumExp(exp) ? makeOk(T.makeNumTExp()) :
     A.isBoolExp(exp) ? makeOk(T.makeBoolTExp()) :
     A.isStrExp(exp) ? makeOk(T.makeStrTExp()) :
@@ -267,7 +252,6 @@ export const typeofLetrec = (exp: A.LetrecExp, tenv: E.TEnv): Result<T.TExp> => 
 export const typeofDefine = (exp: A.DefineExp, tenv: E.TEnv): Result<T.VoidTExp> => {
     const val_type: Result<T.TExp> = typeofExp(exp.val,E.makeExtendTEnv([exp.var.var] , [exp.var.texp] , tenv))
     const constraint1 = bind(val_type, val_type => checkEqualType(val_type, exp.var.texp, exp));
-    //console.log(E.applyTEnv(tenv , 'pair'))
     return bind(constraint1, _ => makeOk(T.makeVoidTExp()));
 };
 
@@ -290,11 +274,9 @@ export const typeofProgram = (exp: A.Program, tenv: E.TEnv): Result<T.TExp> =>{
 
 const typeofProgramExps = (exp: A.Exp, exps: A.Exp[], tenv: E.TEnv): Result<T.TExp> => 
     {
-        //console.log("exp: " + JSON.stringify(exp) + "\nexps: " + JSON.stringify(exps) + "\n")
         if (isEmpty(exps)){ // in case exp is the only expretion left 
         if (A.isDefineExp(exp)){
             //if its define we dont bother making extended env becose its the last exp 
-            //console.log("exps: " + JSON.stringify(exps) + " rest: " + JSON.stringify(rest(exps)))
             return typeofDefine(exp,tenv);
         }
         else{
@@ -308,8 +290,7 @@ const typeofProgramExps = (exp: A.Exp, exps: A.Exp[], tenv: E.TEnv): Result<T.TE
             return typeofProgramExps(first(exps),rest(exps),extTEnv);
         }
         else{
-            return bind(typeofExp(exp, tenv), _ => typeofExps(exps, tenv));
-            //return bind(typeofExp(exp, tenv), _ => typeofExps(exps, tenv));
+            return bind(typeofExp(exp, tenv), _ => typeofExps(exps, tenv));           
         }
     }
 }
@@ -323,14 +304,6 @@ export const typeofLit = (exp: A.LitExp): Result<T.TExp> =>{
     return V.isSymbolSExp(exp.val) ? makeOk(T.makeSymbolTExp(exp.val)) :
     V.isCompoundSExp(exp.val) ? makeOk(T.makePairTExp()) :
     makeFailure(`lit exp must be symbol`);
-    // if(V.isSymbolSExp(exp.val)){
-    //     return makeOk(T.makeSymbolTExp(exp.val));
-    // }else if(V.isCompoundSExp(exp.val)){
-    //     return makeOk(T.makePairTExp())
-    // }
-    // else{
-    //     return makeFailure(`lit exp must be symbol`);
-    // }
 }
 
 // Purpose: compute the type of a set! expression
@@ -361,27 +334,12 @@ export const typeofClass = (exp: A.ClassExp, tenv: E.TEnv): Result<T.TExp> => {
     const newTnv:E.TEnv = E.makeExtendTEnv(funn , funt ,extTEnv)
     const constraint = mapResult((bindi:A.Binding)=> make_func_constraint(bindi,newTnv),exp.methods)
     const funcs:[string , T.TExp][] = R.map((x:A.Binding)=> {return [x.var.var , x.var.texp]} ,exp.methods);
-    //console.log(T.makeProcTExp( fildesTEs ,T.makeClassTExp(exp.typeName.var, funcs)))
     return bind(constraint, _ => makeOk(T.makeProcTExp( fildesTEs ,T.makeClassTExp(exp.typeName.var, funcs))));
 };
 
-// // L51 
-// export const classExpToClassTExp = (ce: ClassExp): ClassTExp => 
-//     makeClassTExp(ce.typeName.var, map((binding: Binding) => [binding.var.var, binding.var.texp], ce.methods));
-    
 
 const make_func_constraint = (bindi:A.Binding,tenv: E.TEnv):Result<true> => 
     bind(typeofExp(bindi.val, tenv), (bodyTE: T.TExp) => checkEqualType(bodyTE, bindi.var.texp, bindi.val));
 
 
-// Purpose: compute the type of a proc-exp
-// Typing rule:
-// If   type<body>(extend-tenv(x1=t1,...,xn=tn; tenv)) = t
-// then type<lambda (x1:t1,...,xn:tn) : t exp)>(tenv) = (t1 * ... * tn -> t)
-export const typeofProc2 = (proc: A.ProcExp, tenv: E.TEnv): Result<T.TExp> => {
-    const argsTEs = R.map((vd) => vd.texp, proc.args);
-    const extTEnv = E.makeExtendTEnv(R.map((vd) => vd.var, proc.args), argsTEs, tenv);
-    const constraint1 = bind(typeofExps(proc.body, extTEnv), (bodyTE: T.TExp) => checkEqualType(bodyTE, proc.returnTE, proc));
-    return bind(constraint1, _ => makeOk(T.makeProcTExp(argsTEs, proc.returnTE)));
-};
 

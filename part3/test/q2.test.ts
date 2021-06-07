@@ -10,7 +10,6 @@ const str:string = "(L5 (list 1 2 3))"
 
 const evalP = (x: string): Result<Value> =>
     bind(parseL5(x), evalProgram)
-// console.log(evalP(str));
 
 const q2: string = fs.readFileSync('./src/q2.l5', { encoding: 'utf-8' });
 describe('Q2 Tests', () => {    

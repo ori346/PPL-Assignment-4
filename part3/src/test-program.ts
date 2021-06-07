@@ -111,13 +111,10 @@ const doIt = (program: string, expected: string) => {
     const p = A.parse(program);
     const t = Res.bind(p, p => {
         const tenv = I.makeTEnvFromClasses(p);
-        // console.log(`tenv = `); 
-        // console.log(JSON.stringify(tenv, null, 4));
         return I.typeofExp(p, tenv);
     });
 
     // JSON object is circular - cannot be serialized
-    // Res.bind(t, t => Res.makeOk(console.log('Raw computed: ', JSON.stringify(t, null, 4))));
 
     Res.bind(t, t => Res.bind(T.unparseTExp(t), 
                             (t: string) => Res.makeOk(console.log('Computed: %j', t))));

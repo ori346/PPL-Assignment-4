@@ -50,8 +50,6 @@ export const typeofExp = (exp: Parsed, tenv: TEnv): Result<TExp> =>
     isDefineExp(exp) ? typeofDefine(exp, tenv) :
     isProgram(exp) ? typeofProgram(exp, tenv) :
     isSetExp(exp) ? typeofSet(exp,tenv):
-    //isPairTExp(exp) ?  :
-    // Not implemented: isSetExp(exp) isLitExp(exp)
     makeFailure("Unknown type");
 
 // Purpose: Compute the type of a sequence of expressions
@@ -98,9 +96,9 @@ export const typeofPrim = (p: PrimOp): Result<TExp> =>
     (p.op === 'string=?') ? parseTE('(T1 * T2 -> boolean)') :
     (p.op === 'display') ? parseTE('(T -> void)') :
     (p.op === 'newline') ? parseTE('(Empty -> void)') :
-    (p.op === 'cdr') ?  parseTE('(cons -> T)')://parseTE('(T1 * T2) -> T2'):
-    (p.op === 'car') ?  parseTE('(cons -> T)')://parseTE('(T1 * T2) -> T1'):
-    (p.op === 'cons') ? parseTE( '(T1 * T2 -> cons)')://parseTE('(T1 * T2) -> (Pair T1 T2)'):
+    (p.op === 'cdr') ?  parseTE('(cons -> T)'):
+    (p.op === 'car') ?  parseTE('(cons -> T)'):
+    (p.op === 'cons') ? parseTE( '(T1 * T2 -> cons)'):
     makeFailure(`Primitive not yet implemented: ${p.op}`);
 
 // Purpose: compute the type of an if-exp
@@ -205,7 +203,6 @@ export const typeofLetrec = (exp: LetrecExp, tenv: TEnv): Result<TExp> => {
 //   (define (var : texp) val)
 // Not implemented
 export const typeofDefine = (exp: DefineExp, tenv: TEnv): Result<VoidTExp> => {
-    //const y = applyTEnv(tenv , exp.var.var)
     const vard = exp.var.var 
     const type = exp.var.texp
     const val = exp.val
