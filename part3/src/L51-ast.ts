@@ -346,7 +346,7 @@ const parseGoodClassExp = (typeName: Sexp, varDecls: Sexp, bindings: Sexp): Resu
         return makeFailure("bad methods Failure");
     }
 
-    if(!isString(typeName)){return makeFailure("typename musr be string")} 
+    if(!isString(typeName)){return makeFailure("typename must be string")} 
     const t_name:TVar = makeTVar(typeName)
     const args:Result<VarDecl[]> = mapResult(parseVarDecl, varDecls);
     const functions: Result<Binding[]>  = safe2((vds: VarDecl[], vals: CExp[]) => makeOk(zipWith(makeBinding, vds, vals)))
@@ -355,18 +355,6 @@ const parseGoodClassExp = (typeName: Sexp, varDecls: Sexp, bindings: Sexp): Resu
       return safe2((ar:VarDecl[],funcs:Binding[]) => makeOk(makeClassExp(t_name,ar,funcs)))(args,functions);
     
     }
-
-//     let tenv:TEnv = makeEmptyTEnv()
-//     const type_name:Result<TExp> = parseTExp(typeName)
-//     const tvar:Result<TVar>  = bind(type_name , tv => isTVar(tv) ? makeOk(tv) : makeFailure("type most be a Tvar"))
-//     const varsName:Result<VarDecl[]> = mapResult( b => bind(parseTExp(b[2]) , t => { tenv = makeExtendTEnv([b[0]] , [t] ,tenv) ;return makeOk(makeVarDecl(b[0] ,t))}) , varDecls);
-//     const bindings1:Result<Binding[]> = mapResult(binding =>  
-//         bind( parseL5CExp(second(binding)) ,
-//         ce => bind(typeofExp(ce , tenv) ,
-//         te => makeOk(makeBinding(makeVarDecl(binding[0] , te), ce))))   ,bindings)
-//     //console.log(JSON.stringify( bind(bindings1,(functions:Binding[]) => bind(varsName , nana => bind(tvar, tn => makeOk(makeClassExp( tn,nana,functions)))))))
-//     return bind(bindings1,(functions:Binding[]) => bind(varsName , nana => bind(tvar, tn => makeOk(makeClassExp( tn,nana,functions)))));
-// }
 
 
 const _merge_into_bindings = (verD:VarDecl[],valsRes:CExp[] , acc:Binding[]):Binding[]=>
@@ -390,8 +378,6 @@ const _merge_into_bindings_new = (fund_names:string[],valsRes:Sexp[] , acc:Resul
         const new_acc = bind(acc, curr_acc => bind(to_add, x => makeOk(curr_acc.concat(x))));
         return _merge_into_bindings_new(rest(fund_names),rest(valsRes),new_acc);  
     }
-
-
 }
 
 
@@ -401,21 +387,6 @@ const isGoodClassBindings = (bindings: Sexp): bindings is [string, Sexp][] =>
     allT(isIdentifier, map(first, bindings))&&
     allT(isArray, map(second, bindings));
     
-
-// export const parseClassExp = (fields:Sexp,methods:Sexp): Result<ClassExp> =>{
-//     if(!isArray(fields) || !allT(isString, fields)){
-//     return makeFailure("bad fileds Failure");
-//     }
-//     if(!isGoodClassBindings(methods)){
-//     return makeFailure("bad methods Failure");
-//     }
-    
-//     const vars = map(b => b[0], methods);
-//     const valsResult = mapResult(binding => parseL31CExp(second(binding)), methods);
-//     const bindingsResult = bind(valsResult, (vals: CExp[]) => makeOk(zipWith(makeBinding, vars, vals)));
-//     return bind(bindingsResult,(functions:Binding[])=>makeOk(makeClassExp(map(makeVarDecl,fields),functions)));
-
-// }
 
 // sexps has the shape (quote <sexp>)
 export const parseLitExp = (param: Sexp): Result<LitExp> =>

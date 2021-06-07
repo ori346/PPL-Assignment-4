@@ -371,4 +371,4 @@ describe('L5 Type Inference', () => {
             expect(verifyTeOfExprWithInference(program9, expected9)).to.deep.equal(makeOk(true));
         });
      });
- });
+  });

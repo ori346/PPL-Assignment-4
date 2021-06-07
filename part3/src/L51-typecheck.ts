@@ -212,7 +212,6 @@ export const typeofDefine = (exp: DefineExp, tenv: TEnv): Result<VoidTExp> => {
     const val_type:Result<TExp> = typeofExp(exp.val,tenv);
     const constraint1:Result<boolean> = bind(val_type, val_type => checkEqualType(val_type, exp.var.texp, exp));
     return bind(constraint1,_ =>{ 
-        console.log("define!!!")
         return makeOk(makeVoidTExp())});
 };
 

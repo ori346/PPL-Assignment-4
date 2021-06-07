@@ -289,9 +289,12 @@ export const typeofProgram = (exp: A.Program, tenv: E.TEnv): Result<T.TExp> =>{
 }
 
 const typeofProgramExps = (exp: A.Exp, exps: A.Exp[], tenv: E.TEnv): Result<T.TExp> => 
-    {    if (isEmpty(exps)){ // in case exp is the only expretion left 
+    {
+        //console.log("exp: " + JSON.stringify(exp) + "\nexps: " + JSON.stringify(exps) + "\n")
+        if (isEmpty(exps)){ // in case exp is the only expretion left 
         if (A.isDefineExp(exp)){
             //if its define we dont bother making extended env becose its the last exp 
+            //console.log("exps: " + JSON.stringify(exps) + " rest: " + JSON.stringify(rest(exps)))
             return typeofDefine(exp,tenv);
         }
         else{
@@ -305,10 +308,7 @@ const typeofProgramExps = (exp: A.Exp, exps: A.Exp[], tenv: E.TEnv): Result<T.TE
             return typeofProgramExps(first(exps),rest(exps),extTEnv);
         }
         else{
-            //console.log("exps: " + JSON.stringify(exps) + "  " + JSON.stringify(rest(exps)))
-            if(isEmpty(rest(exps)))
-                return typeofExp(first(exps) , tenv)
-            return bind(typeofExp(first(exps), tenv), _ => typeofExps(rest(exps), tenv));
+            return bind(typeofExp(exp, tenv), _ => typeofExps(exps, tenv));
             //return bind(typeofExp(exp, tenv), _ => typeofExps(exps, tenv));
         }
     }
@@ -353,9 +353,6 @@ export const typeofSet = (exp: A.SetExp, tenv: E.TEnv): Result<T.VoidTExp> => {
 //      type<method_k>(class-tenv) = mk
 // Then type<class(type fields methods)>(tend) = = [t1 * ... * tn -> type]
 export const typeofClass = (exp: A.ClassExp, tenv: E.TEnv): Result<T.TExp> => {
-    //console.log(exp)
-    //const argsTEs:T.TVar =  exp.typeName
-    //console.log(argsTEs)
     const fildes:string[] = R.map((x:A.VarDecl)=>  x.var ,exp.fields);
     const fildesTEs:T.TExp[] = R.map((vd) =>  vd.texp , exp.fields);
     const extTEnv = E.makeExtendTEnv(fildes, fildesTEs, tenv);
@@ -364,6 +361,7 @@ export const typeofClass = (exp: A.ClassExp, tenv: E.TEnv): Result<T.TExp> => {
     const newTnv:E.TEnv = E.makeExtendTEnv(funn , funt ,extTEnv)
     const constraint = mapResult((bindi:A.Binding)=> make_func_constraint(bindi,newTnv),exp.methods)
     const funcs:[string , T.TExp][] = R.map((x:A.Binding)=> {return [x.var.var , x.var.texp]} ,exp.methods);
+    //console.log(T.makeProcTExp( fildesTEs ,T.makeClassTExp(exp.typeName.var, funcs)))
     return bind(constraint, _ => makeOk(T.makeProcTExp( fildesTEs ,T.makeClassTExp(exp.typeName.var, funcs))));
 };
 
